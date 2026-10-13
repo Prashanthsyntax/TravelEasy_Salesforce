@@ -3,7 +3,7 @@
     <apiVersion>68.0</apiVersion>
     <isExposed>true</isExposed>
     <masterLabel>TravelEasy App</masterLabel>
-    <description>TravelEasy travel and expense management dashboard.</description>
+    <description>TravelEasy travel and expense dashboard.</description>
     <targets>
         <target>lightning__AppPage</target>
         <target>lightning__HomePage</target>
