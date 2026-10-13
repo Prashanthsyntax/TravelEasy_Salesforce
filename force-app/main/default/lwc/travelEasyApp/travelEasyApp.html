@@ -1,0 +1,214 @@
+
+<template>
+    <div class="app-container">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">T</div>
+                <div>
+                    <h1>TravelEasy</h1>
+                    <p>Travel &amp; Expense</p>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <p class="nav-heading">WORKSPACE</p>
+
+                <a class="nav-item active" href="javascript:void(0)">
+                    <span>▦</span> Dashboard
+                </a>
+                <a class="nav-item" href="javascript:void(0)">
+                    <span>✈</span> Travel Requests
+                </a>
+                <a class="nav-item" href="javascript:void(0)">
+                    <span>▤</span> Itineraries
+                </a>
+                <a class="nav-item" href="javascript:void(0)">
+                    <span>₹</span> Expense Reports
+                </a>
+                <a class="nav-item" href="javascript:void(0)">
+                    <span>↻</span> Reimbursements
+                </a>
+                <a class="nav-item" href="javascript:void(0)">
+                    <span>✓</span> Approvals
+                </a>
+            </div>
+
+            <div class="sidebar-bottom">
+                <div class="help-card">
+                    <div class="help-icon">✦</div>
+                    <h3>Need assistance?</h3>
+                    <p>Your travel workspace, all in one place.</p>
+                </div>
+
+                <div class="profile">
+                    <div class="avatar">P</div>
+                    <div>
+                        <h4>{userName}</h4>
+                        <p>Travel Employee</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <main class="main-content">
+
+            <header class="topbar">
+                <div>
+                    <p class="breadcrumb">Workspace / Dashboard</p>
+                    <h2>Dashboard</h2>
+                </div>
+
+                <div class="topbar-right">
+                    <span class="status-label">
+                        <span class="status-dot"></span>
+                        Salesforce Connected
+                    </span>
+                    <div class="avatar top-avatar">P</div>
+                </div>
+            </header>
+
+            <section class="welcome-section">
+                <div>
+                    <p class="eyebrow">YOUR TRAVEL WORKSPACE</p>
+                    <h2>{welcomeMessage} 👋</h2>
+                    <p class="welcome-text">
+                        Manage your journeys, expenses, and reimbursements
+                        from one place.
+                    </p>
+                </div>
+
+                <button class="primary-button" type="button">
+                    + New Travel Request
+                </button>
+            </section>
+
+            <!-- Summary cards -->
+            <section class="stats-grid">
+
+                <article class="stat-card">
+                    <div class="stat-top">
+                        <span class="stat-label">Total Requests</span>
+                        <span class="stat-icon blue">✈</span>
+                    </div>
+                    <h3>{totalRequests}</h3>
+                    <p class="stat-caption">All travel requests</p>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-top">
+                        <span class="stat-label">Pending Approvals</span>
+                        <span class="stat-icon orange">◷</span>
+                    </div>
+                    <h3>{pendingApprovals}</h3>
+                    <p class="stat-caption">Awaiting a decision</p>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-top">
+                        <span class="stat-label">Total Expenses</span>
+                        <span class="stat-icon purple">₹</span>
+                    </div>
+                    <h3>₹{totalExpenses}</h3>
+                    <p class="stat-caption">Recorded employee expenses</p>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-top">
+                        <span class="stat-label">Reimbursements</span>
+                        <span class="stat-icon green">↗</span>
+                    </div>
+                    <h3>₹{totalReimbursements}</h3>
+                    <p class="stat-caption">Total approved amounts</p>
+                </article>
+
+            </section>
+
+            <!-- Lower dashboard -->
+            <section class="dashboard-grid">
+
+                <!-- Real Salesforce travel requests -->
+                <article class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h3>Recent Travel Requests</h3>
+                            <p>Track your latest travel plans</p>
+                        </div>
+                        <a href="javascript:void(0)">View all →</a>
+                    </div>
+
+                    <template for:each={recentRequests} for:item="request">
+                        <div class="request-row" key={request.Id}>
+                            <div class="destination-icon">✈</div>
+
+                            <div class="request-details">
+                                <h4>{request.Destination__c}</h4>
+                                <p>{request.Purpose__c} · {request.Name}</p>
+                                <p>
+                                    {request.From_Location__c}
+                                    → {request.Destination__c}
+                                </p>
+                                <p>
+                                    Status: {request.Status__c}
+                                </p>
+                            </div>
+
+                            <span class="badge">{request.Status__c}</span>
+                        </div>
+                    </template>
+
+                    <template if:false={recentRequests.length}>
+                        <div class="empty-note">
+                            No travel requests found for your account.
+                        </div>
+                    </template>
+                </article>
+
+                <!-- Quick Actions -->
+                <article class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h3>Quick Actions</h3>
+                            <p>Get things done faster</p>
+                        </div>
+                    </div>
+
+                    <button class="action-item" type="button">
+                        <span class="action-icon blue">✈</span>
+                        <span>
+                            <strong>Request Travel</strong>
+                            <small>Plan your next business trip</small>
+                        </span>
+                        <span class="action-arrow">→</span>
+                    </button>
+
+                    <button class="action-item" type="button">
+                        <span class="action-icon purple">₹</span>
+                        <span>
+                            <strong>Submit Expenses</strong>
+                            <small>Record expenses and receipts</small>
+                        </span>
+                        <span class="action-arrow">→</span>
+                    </button>
+
+                    <button class="action-item" type="button">
+                        <span class="action-icon green">↻</span>
+                        <span>
+                            <strong>Track Reimbursement</strong>
+                            <small>Check payment progress</small>
+                        </span>
+                        <span class="action-arrow">→</span>
+                    </button>
+                </article>
+
+            </section>
+
+            <footer class="footer">
+                TravelEasy · Travel and expense management
+            </footer>
+
+        </main>
+    </div>
+</template>

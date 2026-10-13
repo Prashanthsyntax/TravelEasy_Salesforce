@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Expense_Report__c</fullName>
+    <deleteConstraint>Restrict</deleteConstraint>
+    <label>Expense Report</label>
+    <referenceTo>Expense_Report__c</referenceTo>
+    <relationshipLabel>Reimbursements</relationshipLabel>
+    <relationshipName>Reimbursements</relationshipName>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>
