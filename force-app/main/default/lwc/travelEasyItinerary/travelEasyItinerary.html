@@ -1,0 +1,252 @@
+<template>
+    <section class="page-shell">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">TRAVELEASE WORKSPACE</p>
+                <h1>Travel Itineraries</h1>
+                <p class="subtitle">Manage routes, bookings, and trip details in one place.</p>
+            </div>
+            <div class="header-actions">
+                <lightning-button-icon
+                    icon-name="utility:refresh"
+                    alternative-text="Refresh itineraries"
+                    title="Refresh"
+                    onclick={handleRefresh}
+                    disabled={isLoading}>
+                </lightning-button-icon>
+                <lightning-button
+                    label="New Itinerary"
+                    variant="brand"
+                    icon-name="utility:add"
+                    onclick={handleNewClick}>
+                </lightning-button>
+            </div>
+        </header>
+
+        <template lwc:if={errorMessage}>
+            <div class="error-banner" role="alert">{errorMessage}</div>
+        </template>
+
+        <div class="summary-grid">
+            <article class="summary-card">
+                <span class="summary-icon icon-purple">✈</span>
+                <div>
+                    <p class="summary-label">Total itineraries</p>
+                    <p class="summary-value">{totalItineraries}</p>
+                </div>
+            </article>
+            <article class="summary-card">
+                <span class="summary-icon icon-green">✓</span>
+                <div>
+                    <p class="summary-label">Booked</p>
+                    <p class="summary-value">{bookedCount}</p>
+                </div>
+            </article>
+            <article class="summary-card">
+                <span class="summary-icon icon-amber">◷</span>
+                <div>
+                    <p class="summary-label">Not booked</p>
+                    <p class="summary-value">{notBookedCount}</p>
+                </div>
+            </article>
+            <article class="summary-card">
+                <span class="summary-icon icon-blue">₹</span>
+                <div>
+                    <p class="summary-label">Total ticket cost</p>
+                    <p class="summary-value">{formattedTotalTicketCost}</p>
+                </div>
+            </article>
+        </div>
+
+        <div class="toolbar">
+            <div class="search-control">
+                <lightning-input
+                    type="search"
+                    variant="label-hidden"
+                    label="Search itineraries"
+                    placeholder="Search route, request, or booking reference..."
+                    value={searchTerm}
+                    onchange={handleSearch}>
+                </lightning-input>
+            </div>
+            <div class="filter-control">
+                <lightning-combobox
+                    variant="label-hidden"
+                    label="Booking status"
+                    value={statusFilter}
+                    options={statusOptions}
+                    onchange={handleStatusFilter}>
+                </lightning-combobox>
+            </div>
+        </div>
+
+        <template lwc:if={isLoading}>
+            <div class="loading-state">
+                <lightning-spinner alternative-text="Loading itineraries" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <template lwc:elseif={hasItineraries}>
+            <div class="itinerary-list">
+                <template for:each={filteredItineraries} for:item="item">
+                    <article class="itinerary-card" key={item.Id}>
+                        <div class="card-topline">
+                            <div class="record-meta">
+                                <span class="record-number">{item.Name}</span>
+                                <span class={item.statusClass}>{item.Booking_Status__c}</span>
+                            </div>
+                            <div class="card-actions">
+                                <lightning-button-icon
+                                    icon-name="utility:preview"
+                                    alternative-text="View itinerary"
+                                    title="View details"
+                                    data-id={item.Id}
+                                    onclick={handleViewClick}>
+                                </lightning-button-icon>
+                                <lightning-button-icon
+                                    icon-name="utility:edit"
+                                    alternative-text="Edit itinerary"
+                                    title="Edit itinerary"
+                                    data-id={item.Id}
+                                    onclick={handleEditClick}>
+                                </lightning-button-icon>
+                            </div>
+                        </div>
+
+                        <div class="route-row">
+                            <div class="route-point">
+                                <span class="route-label">FROM</span>
+                                <h2>{item.From__c}</h2>
+                            </div>
+                            <div class="route-connector">→</div>
+                            <div class="route-point">
+                                <span class="route-label">TO</span>
+                                <h2>{item.To__c}</h2>
+                            </div>
+                        </div>
+
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Travel date</span>
+                                <span class="detail-value">{item.travelDateLabel}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Transport</span>
+                                <span class="detail-value">{item.transportLabel}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Departure</span>
+                                <span class="detail-value">{item.departureLabel}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Arrival</span>
+                                <span class="detail-value">{item.arrivalLabel}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Booking reference</span>
+                                <span class="detail-value">{item.bookingReferenceLabel}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Ticket cost</span>
+                                <span class="detail-value">{item.formattedTicketCost}</span>
+                            </div>
+                        </div>
+
+                        <template lwc:if={item.requestName}>
+                            <div class="request-footer">
+                                <span>Travel request</span>
+                                <strong>{item.requestName}</strong>
+                                <template lwc:if={item.destinationLabel}>
+                                    <span>· {item.destinationLabel}</span>
+                                </template>
+                            </div>
+                        </template>
+                    </article>
+                </template>
+            </div>
+        </template>
+
+        <template lwc:elseif={showEmptyState}>
+            <div class="empty-state">
+                <div class="empty-icon">✈</div>
+                <h2>No itineraries found</h2>
+                <p>{emptyMessage}</p>
+                <lightning-button
+                    label="New Itinerary"
+                    variant="brand"
+                    onclick={handleNewClick}>
+                </lightning-button>
+            </div>
+        </template>
+    </section>
+
+    <template lwc:if={isFormOpen}>
+        <section class="modal-backdrop">
+            <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="itinerary-modal-title">
+                <div class="modal-header">
+                    <div>
+                        <p class="eyebrow">ITINERARY DETAILS</p>
+                        <h2 id="itinerary-modal-title">{formTitle}</h2>
+                    </div>
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        alternative-text="Close"
+                        title="Close"
+                        onclick={handleCloseForm}>
+                    </lightning-button-icon>
+                </div>
+
+                <template lwc:if={formError}>
+                    <div class="error-banner">{formError}</div>
+                </template>
+
+                <template lwc:if={isViewMode}>
+                    <div class="read-only-grid">
+                        <div><span class="detail-label">Travel request</span><strong>{viewRequestName}</strong></div>
+                        <div><span class="detail-label">From</span><strong>{viewFrom}</strong></div>
+                        <div><span class="detail-label">To</span><strong>{viewTo}</strong></div>
+                        <div><span class="detail-label">Travel date</span><strong>{viewTravelDate}</strong></div>
+                        <div><span class="detail-label">Transport mode</span><strong>{viewTransport}</strong></div>
+                        <div><span class="detail-label">Booking status</span><strong>{viewStatus}</strong></div>
+                        <div><span class="detail-label">Departure</span><strong>{viewDeparture}</strong></div>
+                        <div><span class="detail-label">Arrival</span><strong>{viewArrival}</strong></div>
+                        <div><span class="detail-label">Booking reference</span><strong>{viewBookingReference}</strong></div>
+                        <div><span class="detail-label">Ticket cost</span><strong>{viewTicketCost}</strong></div>
+                    </div>
+                    <div class="modal-footer">
+                        <lightning-button label="Close" onclick={handleCloseForm}></lightning-button>
+                        <lightning-button label="Edit itinerary" variant="brand" onclick={handleSwitchToEdit}></lightning-button>
+                    </div>
+                </template>
+
+                <template lwc:else>
+                    <lightning-record-edit-form
+                        object-api-name="Travel_Itinerary__c"
+                        record-id={editingRecordId}
+                        onsuccess={handleSaveSuccess}
+                        onerror={handleSaveError}>
+                        <lightning-messages></lightning-messages>
+
+                        <div class="form-grid">
+                            <lightning-input-field field-name="Travel_Request__c" required></lightning-input-field>
+                            <lightning-input-field field-name="From__c" required></lightning-input-field>
+                            <lightning-input-field field-name="To__c" required></lightning-input-field>
+                            <lightning-input-field field-name="Travel_Date__c"></lightning-input-field>
+                            <lightning-input-field field-name="Transport_Mode__c"></lightning-input-field>
+                            <lightning-input-field field-name="Booking_Status__c"></lightning-input-field>
+                            <lightning-input-field field-name="Departure_Time__c"></lightning-input-field>
+                            <lightning-input-field field-name="Arrival_Time__c"></lightning-input-field>
+                            <lightning-input-field field-name="Booking_Reference__c"></lightning-input-field>
+                            <lightning-input-field field-name="Ticket_Cost__c"></lightning-input-field>
+                        </div>
+
+                        <div class="modal-footer">
+                            <lightning-button label="Cancel" onclick={handleCloseForm}></lightning-button>
+                            <lightning-button type="submit" label="Save itinerary" variant="brand"></lightning-button>
+                        </div>
+                    </lightning-record-edit-form>
+                </template>
+            </div>
+        </section>
+    </template>
+</template>
