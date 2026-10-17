@@ -1,4 +1,3 @@
-
 <template>
     <div class="app-container">
         <!-- Sidebar -->
@@ -15,44 +14,33 @@
             <div class="nav-section">
                 <p class="nav-heading">WORKSPACE</p>
 
-                <a
-                    class={dashboardNavClass}
-                    href="javascript:void(0)"
-                    onclick={handleDashboardClick}
-                >
+                <a class={dashboardNavClass} href="javascript:void(0)" onclick={handleDashboardClick}>
                     <span>▦</span>
                     Dashboard
                 </a>
 
-                <a
-                    class={travelRequestsNavClass}
-                    href="javascript:void(0)"
-                    onclick={handleTravelRequestsClick}
-                >
+                <a class={travelRequestsNavClass} href="javascript:void(0)" onclick={handleTravelRequestsClick}>
                     <span>✈</span>
                     Travel Requests
                 </a>
 
-                <a
-                    class={itinerariesNavClass}
-                    href="javascript:void(0)"
-                    onclick={handleItinerariesClick}
-                >
+                <a class={itinerariesNavClass} href="javascript:void(0)" onclick={handleItinerariesClick}>
                     <span>▤</span>
                     Itineraries
                 </a>
 
-                <a
-                    class={expenseReportsNavClass}
-                    href="javascript:void(0)"
-                    onclick={handleExpenseReportsClick}
-                >
+                <a class={expenseReportsNavClass} href="javascript:void(0)" onclick={handleExpenseReportsClick}>
                     <span>₹</span>
                     Expense Reports
                 </a>
 
-                <a class="nav-item" href="javascript:void(0)">
-                    <span>↻</span>
+                <a class={expenseItemsNavClass} href="javascript:void(0)" onclick={handleExpenseItemsClick}>
+                    <span>🧾</span>
+                    Expense Items
+                </a>
+
+                <a class={reimbursementsNavClass} href="javascript:void(0)" onclick={handleReimbursementsClick}>
+                    <span>₹</span>
                     Reimbursements
                 </a>
 
@@ -113,11 +101,7 @@
                         </p>
                     </div>
 
-                    <button
-                        class="primary-button"
-                        type="button"
-                        onclick={handleNewTravelRequest}
-                    >
+                    <button class="primary-button" type="button" onclick={handleNewTravelRequest}>
                         + New Travel Request
                     </button>
                 </section>
@@ -144,12 +128,8 @@
                         <div class="stat-icon expenses-icon">₹</div>
                         <p>Total Expenses</p>
                         <h3>
-                            <lightning-formatted-number
-                                value={totalExpenses}
-                                format-style="currency"
-                                currency-code="INR"
-                                maximum-fraction-digits="2"
-                            ></lightning-formatted-number>
+                            <lightning-formatted-number value={totalExpenses} format-style="currency"
+                                currency-code="INR" maximum-fraction-digits="2"></lightning-formatted-number>
                         </h3>
                         <span class="stat-caption">Recorded expenses</span>
                     </div>
@@ -158,12 +138,8 @@
                         <div class="stat-icon reimbursement-icon">↻</div>
                         <p>Reimbursements</p>
                         <h3>
-                            <lightning-formatted-number
-                                value={totalReimbursements}
-                                format-style="currency"
-                                currency-code="INR"
-                                maximum-fraction-digits="2"
-                            ></lightning-formatted-number>
+                            <lightning-formatted-number value={totalReimbursements} format-style="currency"
+                                currency-code="INR" maximum-fraction-digits="2"></lightning-formatted-number>
                         </h3>
                         <span class="stat-caption">Approved amounts</span>
                     </div>
@@ -179,20 +155,13 @@
                                 <p>Your latest travel activity</p>
                             </div>
 
-                            <button
-                                class="text-button"
-                                type="button"
-                                onclick={handleTravelRequestsClick}
-                            >
+                            <button class="text-button" type="button" onclick={handleTravelRequestsClick}>
                                 View all
                             </button>
                         </div>
 
                         <template if:true={isLoading}>
-                            <lightning-spinner
-                                alternative-text="Loading dashboard"
-                                size="small"
-                            ></lightning-spinner>
+                            <lightning-spinner alternative-text="Loading dashboard" size="small"></lightning-spinner>
                         </template>
 
                         <template if:true={hasError}>
@@ -201,14 +170,8 @@
 
                         <template if:true={hasRecentRequests}>
                             <div class="request-list">
-                                <template
-                                    for:each={recentRequests}
-                                    for:item="request"
-                                >
-                                    <div
-                                        class="request-row"
-                                        key={request.Id}
-                                    >
+                                <template for:each={recentRequests} for:item="request">
+                                    <div class="request-row" key={request.Id}>
                                         <div class="request-icon">✈</div>
 
                                         <div class="request-details">
@@ -246,11 +209,7 @@
                             </div>
                         </div>
 
-                        <button
-                            class="quick-action"
-                            type="button"
-                            onclick={handleNewTravelRequest}
-                        >
+                        <button class="quick-action" type="button" onclick={handleNewTravelRequest}>
                             <span class="quick-action-icon">✈</span>
                             <span>
                                 <strong>Request Travel</strong>
@@ -259,11 +218,7 @@
                             <span class="action-arrow">›</span>
                         </button>
 
-                        <button
-                            class="quick-action"
-                            type="button"
-                            onclick={handleTravelRequestsClick}
-                        >
+                        <button class="quick-action" type="button" onclick={handleTravelRequestsClick}>
                             <span class="quick-action-icon">▤</span>
                             <span>
                                 <strong>Travel Requests</strong>
@@ -272,11 +227,7 @@
                             <span class="action-arrow">›</span>
                         </button>
 
-                        <button
-                            class="quick-action"
-                            type="button"
-                            onclick={handleItinerariesClick}
-                        >
+                        <button class="quick-action" type="button" onclick={handleItinerariesClick}>
                             <span class="quick-action-icon">🧳</span>
                             <span>
                                 <strong>Travel Itineraries</strong>
@@ -285,11 +236,7 @@
                             <span class="action-arrow">›</span>
                         </button>
 
-                        <button
-                            class="quick-action"
-                            type="button"
-                            onclick={handleExpenseReportsClick}
-                        >
+                        <button class="quick-action" type="button" onclick={handleExpenseReportsClick}>
                             <span class="quick-action-icon">₹</span>
                             <span>
                                 <strong>Expense Reports</strong>
@@ -313,11 +260,7 @@
                             </p>
                         </div>
 
-                        <button
-                            class="primary-button"
-                            type="button"
-                            onclick={handleNewTravelRequest}
-                        >
+                        <button class="primary-button" type="button" onclick={handleNewTravelRequest}>
                             + New Travel Request
                         </button>
                     </section>
@@ -335,10 +278,8 @@
 
                         <template if:true={showTravelRequestFlow}>
                             <div class="flow-container">
-                                <lightning-flow
-                                    flow-api-name="TravelEasy_Travel_Request"
-                                    onstatuschange={handleFlowStatusChange}
-                                ></lightning-flow>
+                                <lightning-flow flow-api-name="TravelEasy_Travel_Request"
+                                    onstatuschange={handleFlowStatusChange}></lightning-flow>
                             </div>
                         </template>
 
@@ -351,11 +292,7 @@
                                     dates, purpose, and estimated cost.
                                 </p>
 
-                                <button
-                                    class="primary-button"
-                                    type="button"
-                                    onclick={handleNewTravelRequest}
-                                >
+                                <button class="primary-button" type="button" onclick={handleNewTravelRequest}>
                                     Start Request
                                 </button>
                             </div>
@@ -370,21 +307,15 @@
                                 <p>Your saved travel requests</p>
                             </div>
 
-                            <button
-                                class="text-button"
-                                type="button"
-                                onclick={handleRefreshRequests}
-                                disabled={isRequestsLoading}
-                            >
+                            <button class="text-button" type="button" onclick={handleRefreshRequests}
+                                disabled={isRequestsLoading}>
                                 Refresh
                             </button>
                         </div>
 
                         <template if:true={isRequestsLoading}>
-                            <lightning-spinner
-                                alternative-text="Loading travel requests"
-                                size="medium"
-                            ></lightning-spinner>
+                            <lightning-spinner alternative-text="Loading travel requests"
+                                size="medium"></lightning-spinner>
                         </template>
 
                         <template if:true={requestsError}>
@@ -409,37 +340,26 @@
                                             </thead>
 
                                             <tbody>
-                                                <template
-                                                    for:each={travelRequests}
-                                                    for:item="request"
-                                                >
+                                                <template for:each={travelRequests} for:item="request">
                                                     <tr key={request.Id}>
                                                         <td>{request.Name}</td>
                                                         <td>{request.Destination__c}</td>
                                                         <td>{request.From_Location__c}</td>
                                                         <td>
-                                                            <lightning-formatted-date-time
-                                                                value={request.Start_Date__c}
-                                                                year="numeric"
-                                                                month="short"
-                                                                day="2-digit"
-                                                            ></lightning-formatted-date-time>
+                                                            <lightning-formatted-date-time value={request.Start_Date__c}
+                                                                year="numeric" month="short"
+                                                                day="2-digit"></lightning-formatted-date-time>
                                                         </td>
                                                         <td>
-                                                            <lightning-formatted-date-time
-                                                                value={request.End_Date__c}
-                                                                year="numeric"
-                                                                month="short"
-                                                                day="2-digit"
-                                                            ></lightning-formatted-date-time>
+                                                            <lightning-formatted-date-time value={request.End_Date__c}
+                                                                year="numeric" month="short"
+                                                                day="2-digit"></lightning-formatted-date-time>
                                                         </td>
                                                         <td>
                                                             <lightning-formatted-number
                                                                 value={request.Estimated_Cost__c}
-                                                                format-style="currency"
-                                                                currency-code="INR"
-                                                                maximum-fraction-digits="2"
-                                                            ></lightning-formatted-number>
+                                                                format-style="currency" currency-code="INR"
+                                                                maximum-fraction-digits="2"></lightning-formatted-number>
                                                         </td>
                                                         <td>
                                                             <span class="request-status">
@@ -478,6 +398,22 @@
                     <c-travel-easy-expense-reports></c-travel-easy-expense-reports>
                 </section>
             </template>
+
+            <!-- Expense Items Page -->
+            <template if:true={showExpenseItemsPage}>
+                <section class="expense-items-page">
+                    <c-travel-easy-expense-items></c-travel-easy-expense-items>
+                </section>
+            </template>
+
+
+            <!-- Reimbursements Page -->
+            <template if:true={showReimbursementsPage}>
+                <section class="reimbursements-page">
+                    <c-travel-easy-reimbursements></c-travel-easy-reimbursements>
+                </section>
+            </template>
+
 
             <!-- Footer -->
             <footer class="footer">

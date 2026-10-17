@@ -1,0 +1,293 @@
+
+<template>
+    <div class="expense-page">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">TRAVELEASY · EXPENSE MANAGEMENT</p>
+                <h1>Expense Items</h1>
+                <p class="subtitle">Create, manage, and review travel expenses and their receipts.</p>
+            </div>
+            <div class="header-actions">
+                <lightning-button label="Refresh" icon-name="utility:refresh"
+                    onclick={handleRefresh} disabled={isLoading}>
+                </lightning-button>
+                <lightning-button label="New Expense" variant="brand"
+                    icon-name="utility:add" onclick={openCreateForm}>
+                </lightning-button>
+            </div>
+        </header>
+
+        <template lwc:if={errorMessage}>
+            <div class="error-banner" role="alert">{errorMessage}</div>
+        </template>
+
+        <section class="summary-grid">
+            <article class="summary-card">
+                <span class="summary-label">Expense Items</span>
+                <strong>{totalItems}</strong>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">Total Amount</span>
+                <strong>{formattedTotal}</strong>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">Pending Policy Check</span>
+                <strong>{pendingPolicyCount}</strong>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">Draft Reports</span>
+                <strong>{draftReportCount}</strong>
+            </article>
+        </section>
+
+        <section class="filters">
+            <lightning-input type="search" label="Search expenses"
+                placeholder="Search category, description, report..."
+                value={searchTerm} onchange={handleSearch}>
+            </lightning-input>
+
+            <lightning-combobox label="Expense status" value={statusFilter}
+                options={statusOptions} onchange={handleStatusFilter}>
+            </lightning-combobox>
+
+            <lightning-combobox label="Policy status" value={policyFilter}
+                options={policyOptions} onchange={handlePolicyFilter}>
+            </lightning-combobox>
+        </section>
+
+        <template lwc:if={isLoading}>
+            <div class="loading-area">
+                <lightning-spinner alternative-text="Loading expense items"
+                    size="medium">
+                </lightning-spinner>
+            </div>
+        </template>
+        <template lwc:else>
+            <template lwc:if={hasItems}>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Expense Item</th>
+                                <th>Expense Report</th>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Policy</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={filteredItems} for:item="item">
+                                <tr key={item.Id}>
+                                    <td>
+                                        <strong>{item.Name}</strong>
+                                        <template lwc:if={item.Description__c}>
+                                            <span class="description">{item.Description__c}</span>
+                                        </template>
+                                    </td>
+                                    <td>{item.reportName}</td>
+                                    <td>{item.formattedDate}</td>
+                                    <td>{item.Category__c}</td>
+                                    <td>{item.formattedAmount}</td>
+                                    <td>
+                                        <span class={item.policyClass}>{item.Policy_Status__c}</span>
+                                    </td>
+                                    <td>
+                                        <span class={item.statusClass}>{item.Status__c}</span>
+                                    </td>
+                                    <td>
+                                        <div class="row-actions">
+                                            <lightning-button-icon icon-name="utility:preview"
+                                                alternative-text="View expense" title="View"
+                                                data-id={item.Id} onclick={handleView}>
+                                            </lightning-button-icon>
+                                            <lightning-button-icon icon-name="utility:edit"
+                                                alternative-text="Edit expense" title="Edit"
+                                                data-id={item.Id} onclick={handleEdit}
+                                                disabled={item.readOnly}>
+                                            </lightning-button-icon>
+                                            <lightning-button-icon icon-name="utility:delete"
+                                                alternative-text="Delete expense" title="Delete"
+                                                data-id={item.Id} onclick={handleDelete}
+                                                disabled={item.readOnly}>
+                                            </lightning-button-icon>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </template>
+            <template lwc:else>
+                <div class="empty-state">
+                    <lightning-icon icon-name="utility:receipt" size="large"
+                        alternative-text="Expense items">
+                    </lightning-icon>
+                    <h2>No expense items found</h2>
+                    <p>Try changing the filters, or create an item under a Draft expense report.</p>
+                    <lightning-button label="Create Expense Item" variant="brand"
+                        onclick={openCreateForm}>
+                    </lightning-button>
+                </div>
+            </template>
+        </template>
+
+        <template lwc:if={showDetails}>
+            <section class="detail-panel">
+                <div class="detail-heading">
+                    <div>
+                        <p class="eyebrow">EXPENSE DETAILS</p>
+                        <h2>{selectedItem.Name}</h2>
+                        <p>{selectedItem.reportName}</p>
+                    </div>
+                    <lightning-button label="Close" onclick={closeDetails}>
+                    </lightning-button>
+                </div>
+
+                <div class="detail-grid">
+                    <div><span>Expense date</span><strong>{selectedItem.formattedDate}</strong></div>
+                    <div><span>Category</span><strong>{selectedItem.Category__c}</strong></div>
+                    <div><span>Amount</span><strong>{selectedItem.formattedAmount}</strong></div>
+                    <div><span>Payment method</span><strong>{selectedItem.Payment_Method__c}</strong></div>
+                    <div><span>Item status</span><strong>{selectedItem.Status__c}</strong></div>
+                    <div><span>Policy status</span><strong>{selectedItem.Policy_Status__c}</strong></div>
+                    <div><span>Policy limit</span><strong>{selectedItem.formattedPolicyLimit}</strong></div>
+                </div>
+
+                <template lwc:if={selectedItem.Description__c}>
+                    <div class="detail-note">
+                        <strong>Description</strong>
+                        <p>{selectedItem.Description__c}</p>
+                    </div>
+                </template>
+                <template lwc:if={selectedItem.Policy_Check_Notes__c}>
+                    <div class="detail-note">
+                        <strong>Policy notes</strong>
+                        <p>{selectedItem.Policy_Check_Notes__c}</p>
+                    </div>
+                </template>
+                <template lwc:if={selectedItem.Rejection_Reason__c}>
+                    <div class="detail-note rejection-note">
+                        <strong>Rejection reason</strong>
+                        <p>{selectedItem.Rejection_Reason__c}</p>
+                    </div>
+                </template>
+
+                <div class="receipt-section">
+                    <div>
+                        <h3>Receipt and supporting files</h3>
+                        <p>Files uploaded here are linked to this Expense Item in Salesforce.</p>
+                    </div>
+                    <template lwc:if={canEditSelected}>
+                        <lightning-file-upload
+                            label="Upload receipt"
+                            name="receiptUploader"
+                            record-id={selectedItem.Id}
+                            accept={acceptedFormats}
+                            multiple
+                            onuploadfinished={handleUploadFinished}>
+                        </lightning-file-upload>
+                    </template>
+                </div>
+
+                <lightning-button label="Refresh after upload" icon-name="utility:refresh"
+                    onclick={handleRefresh}>
+                </lightning-button>
+            </section>
+        </template>
+
+        <template lwc:if={showForm}>
+            <div class="modal-backdrop">
+                <section class="expense-modal" role="dialog" aria-modal="true"
+                    aria-labelledby="expense-modal-title">
+                    <div class="modal-heading">
+                        <div>
+                            <p class="eyebrow">TRAVELEASY</p>
+                            <h2 id="expense-modal-title">{formTitle}</h2>
+                            <p>Expense items can be added only to Draft reports.</p>
+                        </div>
+                        <lightning-button-icon icon-name="utility:close"
+                            alternative-text="Close form" title="Close"
+                            onclick={closeForm} disabled={isSaving}>
+                        </lightning-button-icon>
+                    </div>
+
+                    <template lwc:if={formError}>
+                        <div class="error-banner" role="alert">{formError}</div>
+                    </template>
+
+                    <div class="form-grid">
+                        <lightning-combobox name="reportId" label="Expense Report"
+                            value={form.reportId} options={draftReportOptions}
+                            placeholder="Select a Draft report" required
+                            onchange={handleFieldChange} disabled={isEditing}>
+                        </lightning-combobox>
+
+                        <lightning-input name="expenseDate" type="date"
+                            label="Expense Date" value={form.expenseDate}
+                            max={today} required onchange={handleFieldChange}>
+                        </lightning-input>
+
+                        <lightning-combobox name="category" label="Category"
+                            value={form.category} options={categoryOptions}
+                            placeholder="Select category" required
+                            onchange={handleFieldChange}>
+                        </lightning-combobox>
+
+                        <lightning-input name="amount" type="number"
+                            label="Amount (INR)" value={form.amount}
+                            min="0.01" step="0.01" required
+                            onchange={handleFieldChange}>
+                        </lightning-input>
+
+                        <lightning-combobox name="paymentMethod"
+                            label="Payment Method" value={form.paymentMethod}
+                            options={paymentOptions} placeholder="Select method"
+                            onchange={handleFieldChange}>
+                        </lightning-combobox>
+
+                        <lightning-combobox name="itemStatus" label="Item Status"
+                            value={form.itemStatus} options={itemStatusOptions}
+                            required onchange={handleFieldChange}
+                            disabled={isNotAdmin}>
+                        </lightning-combobox>
+
+                        <div class="full-width">
+                            <lightning-textarea name="description"
+                                label="Description" value={form.description}
+                                maxlength="32000" onchange={handleFieldChange}>
+                            </lightning-textarea>
+                        </div>
+                    </div>
+
+                    <template lwc:if={isEditing}>
+                        <div class="policy-readonly">
+                            <p><strong>Policy status:</strong> {editingPolicyStatus}</p>
+                            <p>Policy status is managed by your existing Salesforce policy process.</p>
+                        </div>
+                    </template>
+
+                    <div class="modal-actions">
+                        <lightning-button label="Cancel" onclick={closeForm}
+                            disabled={isSaving}>
+                        </lightning-button>
+                        <lightning-button label={saveLabel} variant="brand"
+                            onclick={saveExpense} disabled={saveDisabled}>
+                        </lightning-button>
+                    </div>
+
+                    <template lwc:if={isSaving}>
+                        <div class="saving-overlay">
+                            <lightning-spinner alternative-text="Saving expense"
+                                size="medium">
+                            </lightning-spinner>
+                        </div>
+                    </template>
+                </section>
+            </div>
+        </template>
+    </div>
+</template>

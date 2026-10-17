@@ -1,0 +1,349 @@
+
+<template>
+    <div class="reimbursements">
+        <div class="page-header">
+            <div>
+                <p class="eyebrow">TRAVELEASE · PAYMENTS</p>
+                <h1>Reimbursements</h1>
+                <p class="subtitle">Manage approved expenses and reimbursement payments.</p>
+            </div>
+
+            <div class="header-actions">
+                <lightning-button
+                    label="Refresh"
+                    icon-name="utility:refresh"
+                    onclick={handleRefresh}
+                    disabled={isLoading}>
+                </lightning-button>
+
+                <lightning-button
+                    label="Create Reimbursement"
+                    icon-name="utility:add"
+                    variant="brand"
+                    onclick={handleOpenCreate}>
+                </lightning-button>
+            </div>
+        </div>
+
+        <template lwc:if={isLoading}>
+            <lightning-spinner alternative-text="Loading reimbursements"></lightning-spinner>
+        </template>
+
+        <template lwc:else>
+            <div class="summary-grid">
+                <article class="summary-card">
+                    <span class="summary-label">Total Reimbursements</span>
+                    <strong>{summary.totalReimbursements}</strong>
+                </article>
+                <article class="summary-card pending-card">
+                    <span class="summary-label">Pending</span>
+                    <strong>{summary.pendingReimbursements}</strong>
+                </article>
+                <article class="summary-card paid-card">
+                    <span class="summary-label">Paid</span>
+                    <strong>{summary.paidReimbursements}</strong>
+                </article>
+                <article class="summary-card amount-card">
+                    <span class="summary-label">Total Approved Amount</span>
+                    <strong>
+                        <lightning-formatted-number
+                            value={totalApprovedAmount}
+                            format-style="currency"
+                            currency-code="INR">
+                        </lightning-formatted-number>
+                    </strong>
+                </article>
+            </div>
+
+            <template lwc:if={errorMessage}>
+                <div class="error-message" role="alert">{errorMessage}</div>
+            </template>
+
+            <section class="records-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Reimbursement Records</h2>
+                        <p>Search, filter, and open a reimbursement.</p>
+                    </div>
+                    <span class="record-count">{filteredReimbursements.length} records</span>
+                </div>
+
+                <div class="filters">
+                    <lightning-input
+                        type="search"
+                        label="Search"
+                        placeholder="Number, employee, report, reference..."
+                        value={searchTerm}
+                        onchange={handleSearch}>
+                    </lightning-input>
+
+                    <lightning-combobox
+                        label="Status"
+                        value={selectedStatus}
+                        options={statusOptions}
+                        onchange={handleStatusFilter}>
+                    </lightning-combobox>
+
+                    <lightning-combobox
+                        label="Payment Method"
+                        value={selectedPaymentMethod}
+                        options={paymentMethodOptions}
+                        onchange={handlePaymentMethodFilter}>
+                    </lightning-combobox>
+                </div>
+
+                <template lwc:if={hasReimbursements}>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Reimbursement No.</th>
+                                    <th>Employee</th>
+                                    <th>Expense Report</th>
+                                    <th>Approved Amount</th>
+                                    <th>Payment Date</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={filteredReimbursements} for:item="row">
+                                    <tr key={row.id}>
+                                        <td><strong>{row.reimbursementNumber}</strong></td>
+                                        <td>{row.employeeName}</td>
+                                        <td>{row.expenseReportName}</td>
+                                        <td>
+                                            <lightning-formatted-number
+                                                value={row.approvedAmount}
+                                                format-style="currency"
+                                                currency-code="INR">
+                                            </lightning-formatted-number>
+                                        </td>
+                                        <td>
+                                            <lightning-formatted-date-time
+                                                value={row.paymentDate}
+                                                year="numeric"
+                                                month="short"
+                                                day="2-digit">
+                                            </lightning-formatted-date-time>
+                                        </td>
+                                        <td><span class="status-pill">{row.status}</span></td>
+                                        <td>
+                                            <lightning-button
+                                                label="View / Edit"
+                                                data-id={row.id}
+                                                onclick={handleView}>
+                                            </lightning-button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+
+                <template lwc:if={showEmptyState}>
+                    <div class="empty-state">
+                        <lightning-icon icon-name="utility:money" size="large"></lightning-icon>
+                        <h3>No reimbursements found</h3>
+                        <p>Create a reimbursement or adjust your search filters.</p>
+                    </div>
+                </template>
+            </section>
+        </template>
+
+        <!-- Create Reimbursement Modal -->
+        <template lwc:if={showCreateModal}>
+            <section class="modal-backdrop">
+                <div class="form-modal" role="dialog" aria-modal="true"
+                    aria-labelledby="create-heading">
+                    <div class="modal-header">
+                        <div>
+                            <p class="eyebrow">TRAVELEASE · NEW RECORD</p>
+                            <h2 id="create-heading">Create Reimbursement</h2>
+                            <p class="subtitle">Enter the reimbursement details below.</p>
+                        </div>
+                        <lightning-button-icon
+                            icon-name="utility:close"
+                            alternative-text="Close"
+                            onclick={handleCloseCreate}
+                            disabled={isSaving}>
+                        </lightning-button-icon>
+                    </div>
+
+                    <div class="form-grid">
+                        <lightning-record-picker
+                            label="Employee"
+                            placeholder="Search for an employee..."
+                            object-api-name="User"
+                            value={newEmployeeId}
+                            onchange={handleEmployeeChange}
+                            required>
+                        </lightning-record-picker>
+
+                        <lightning-record-picker
+                            label="Expense Report"
+                            placeholder="Search for an expense report..."
+                            object-api-name="Expense_Report__c"
+                            value={newExpenseReportId}
+                            onchange={handleExpenseReportChange}
+                            required>
+                        </lightning-record-picker>
+
+                        <lightning-input
+                            type="number"
+                            label="Approved Amount (₹)"
+                            min="0.01"
+                            step="0.01"
+                            value={newApprovedAmount}
+                            onchange={handleAmountChange}
+                            required>
+                        </lightning-input>
+
+                        <lightning-combobox
+                            label="Payment Method"
+                            value={newPaymentMethod}
+                            options={createPaymentMethodOptions}
+                            onchange={handleCreatePaymentMethodChange}
+                            required>
+                        </lightning-combobox>
+
+                        <lightning-combobox
+                            label="Status"
+                            value={newStatus}
+                            options={createStatusOptions}
+                            onchange={handleCreateStatusChange}
+                            required>
+                        </lightning-combobox>
+
+                        <lightning-input
+                            type="date"
+                            label="Payment Date"
+                            value={newPaymentDate}
+                            onchange={handlePaymentDateChange}>
+                        </lightning-input>
+
+                        <lightning-input
+                            label="Payment Reference"
+                            value={newPaymentReference}
+                            onchange={handlePaymentReferenceChange}>
+                        </lightning-input>
+
+                        <lightning-textarea
+                            label="Finance Remarks"
+                            value={newFinanceRemarks}
+                            onchange={handleFinanceRemarksChange}>
+                        </lightning-textarea>
+                    </div>
+
+                    <p class="form-note">
+                        The reimbursement number is generated automatically by Salesforce.
+                        Use a Paid status only when payment has actually been completed.
+                    </p>
+
+                    <div class="details-actions">
+                        <lightning-button
+                            label="Cancel"
+                            onclick={handleCloseCreate}
+                            disabled={isSaving}>
+                        </lightning-button>
+                        <lightning-button
+                            label="Create Reimbursement"
+                            variant="brand"
+                            onclick={handleCreate}
+                            disabled={isSaving}>
+                        </lightning-button>
+                    </div>
+
+                    <template lwc:if={isSaving}>
+                        <lightning-spinner alternative-text="Saving reimbursement" size="small"></lightning-spinner>
+                    </template>
+                </div>
+            </section>
+        </template>
+
+        <!-- Existing Reimbursement Details -->
+        <template lwc:if={showDetails}>
+            <section class="details-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">REIMBURSEMENT DETAILS</p>
+                        <h2>{selectedReimbursement.reimbursementNumber}</h2>
+                    </div>
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        alternative-text="Close details"
+                        onclick={handleCloseDetails}>
+                    </lightning-button-icon>
+                </div>
+
+                <div class="details-grid">
+                    <div>
+                        <span class="detail-label">Employee</span>
+                        <p>{selectedReimbursement.employeeName}</p>
+                    </div>
+                    <div>
+                        <span class="detail-label">Expense Report</span>
+                        <p>{selectedReimbursement.expenseReportName}</p>
+                    </div>
+                    <div>
+                        <span class="detail-label">Approved Amount</span>
+                        <p>
+                            <lightning-formatted-number
+                                value={selectedReimbursement.approvedAmount}
+                                format-style="currency"
+                                currency-code="INR">
+                            </lightning-formatted-number>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="edit-grid">
+                    <lightning-input
+                        type="date"
+                        label="Payment Date"
+                        value={selectedReimbursement.paymentDate}
+                        data-field="paymentDate"
+                        onchange={handleFieldChange}>
+                    </lightning-input>
+
+                    <lightning-combobox
+                        label="Payment Method"
+                        value={selectedReimbursement.paymentMethod}
+                        options={paymentMethodOptions}
+                        data-field="paymentMethod"
+                        onchange={handleFieldChange}>
+                    </lightning-combobox>
+
+                    <lightning-input
+                        label="Payment Reference"
+                        value={selectedReimbursement.paymentReference}
+                        data-field="paymentReference"
+                        onchange={handleFieldChange}>
+                    </lightning-input>
+
+                    <lightning-combobox
+                        label="Status"
+                        value={selectedReimbursement.status}
+                        options={statusOptions}
+                        data-field="status"
+                        onchange={handleFieldChange}>
+                    </lightning-combobox>
+
+                    <lightning-textarea
+                        class="remarks-field"
+                        label="Finance Remarks"
+                        value={selectedReimbursement.financeRemarks}
+                        data-field="financeRemarks"
+                        onchange={handleFieldChange}>
+                    </lightning-textarea>
+                </div>
+
+                <div class="details-actions">
+                    <lightning-button label="Cancel" onclick={handleCloseDetails} disabled={isSaving}></lightning-button>
+                    <lightning-button label="Save Changes" variant="brand" onclick={handleSave} disabled={isSaving}></lightning-button>
+                </div>
+            </section>
+        </template>
+    </div>
+</template>

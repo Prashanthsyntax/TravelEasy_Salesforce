@@ -12,6 +12,8 @@ export default class TravelEasyApp extends LightningElement {
     showTravelRequestFlow = false;
     showItinerariesPage = false;
     showExpenseReportsPage = false;
+    showExpenseItemsPage = false;
+    showReimbursementsPage = false;
 
     // Dashboard data
     userName = 'User';
@@ -65,6 +67,7 @@ export default class TravelEasyApp extends LightningElement {
         this.showTravelRequestFlow = false;
         this.showItinerariesPage = false;
         this.showExpenseReportsPage = false;
+        this.showExpenseItemsPage = false;
     }
 
     // Open Travel Requests
@@ -74,6 +77,7 @@ export default class TravelEasyApp extends LightningElement {
         this.showTravelRequestFlow = false;
         this.showItinerariesPage = false;
         this.showExpenseReportsPage = false;
+        this.showExpenseItemsPage = false;
 
         return this.loadTravelRequests();
     }
@@ -85,6 +89,7 @@ export default class TravelEasyApp extends LightningElement {
         this.showTravelRequestFlow = true;
         this.showItinerariesPage = false;
         this.showExpenseReportsPage = false;
+        this.showExpenseItemsPage = false;
     }
 
     // Open Travel Itineraries
@@ -94,6 +99,7 @@ export default class TravelEasyApp extends LightningElement {
         this.showTravelRequestFlow = false;
         this.showItinerariesPage = true;
         this.showExpenseReportsPage = false;
+        this.showExpenseItemsPage = false;
     }
 
     // Open Expense Reports
@@ -103,6 +109,27 @@ export default class TravelEasyApp extends LightningElement {
         this.showTravelRequestFlow = false;
         this.showItinerariesPage = false;
         this.showExpenseReportsPage = true;
+        this.showExpenseItemsPage = false;
+    }
+
+    // Open Expense Items
+    handleExpenseItemsClick() {
+        this.showDashboardPage = false;
+        this.showTravelRequestsPage = false;
+        this.showTravelRequestFlow = false;
+        this.showItinerariesPage = false;
+        this.showExpenseReportsPage = false;
+        this.showExpenseItemsPage = true;
+    }
+
+    handleReimbursementsClick() {
+        this.showDashboardPage = false;
+        this.showTravelRequestsPage = false;
+        this.showTravelRequestFlow = false;
+        this.showItinerariesPage = false;
+        this.showExpenseReportsPage = false;
+        this.showExpenseItemsPage = false;
+        this.showReimbursementsPage = true;
     }
 
     // Refresh Travel Requests
@@ -167,6 +194,10 @@ export default class TravelEasyApp extends LightningElement {
 
     // Current page title
     get currentPageTitle() {
+        if (this.showExpenseItemsPage) {
+            return 'Expense Items';
+        }
+
         if (this.showExpenseReportsPage) {
             return 'Expense Reports';
         }
@@ -203,6 +234,18 @@ export default class TravelEasyApp extends LightningElement {
 
     get expenseReportsNavClass() {
         return this.showExpenseReportsPage
+            ? 'nav-item active'
+            : 'nav-item';
+    }
+
+    get expenseItemsNavClass() {
+        return this.showExpenseItemsPage
+            ? 'nav-item active'
+            : 'nav-item';
+    }
+
+    get reimbursementsNavClass() {
+        return this.showReimbursementsPage
             ? 'nav-item active'
             : 'nav-item';
     }
