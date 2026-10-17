@@ -1,46 +1,62 @@
 
 <template>
     <div class="expense-page">
+        <!-- Page Header -->
         <div class="page-header">
             <div>
                 <p class="eyebrow">TRAVELEASY · FINANCE</p>
                 <h1>Expense Reports</h1>
                 <p class="subtitle">
-                    Track your submitted expenses, review policy checks, and monitor approvals.
+                    Track expenses, check policies, and monitor approvals.
                 </p>
             </div>
 
-            <lightning-button
-                label="Refresh"
-                icon-name="utility:refresh"
-                onclick={handleRefresh}
-                disabled={isLoading}>
-            </lightning-button>
+            <div class="header-actions">
+                <lightning-button
+                    label="New Expense"
+                    variant="brand"
+                    icon-name="utility:add"
+                    onclick={handleOpenExpenseForm}>
+                </lightning-button>
+
+                <lightning-button
+                    label="Refresh"
+                    icon-name="utility:refresh"
+                    onclick={handleRefresh}
+                    disabled={isLoading}>
+                </lightning-button>
+            </div>
         </div>
 
+        <!-- Page Error -->
         <template if:true={errorMessage}>
             <div class="error-banner">{errorMessage}</div>
         </template>
 
+        <!-- Summary Cards -->
         <div class="summary-grid">
             <article class="summary-card">
                 <span class="summary-label">Total Reports</span>
                 <strong>{totalReports}</strong>
             </article>
+
             <article class="summary-card">
                 <span class="summary-label">Pending Review</span>
                 <strong>{pendingReports}</strong>
             </article>
+
             <article class="summary-card">
                 <span class="summary-label">Approved / Paid</span>
                 <strong>{approvedReports}</strong>
             </article>
+
             <article class="summary-card">
                 <span class="summary-label">Total Expenses</span>
                 <strong>{formattedGrandTotal}</strong>
             </article>
         </div>
 
+        <!-- Search and Filters -->
         <div class="toolbar">
             <lightning-input
                 type="search"
@@ -58,6 +74,7 @@
             </lightning-combobox>
         </div>
 
+        <!-- Loading -->
         <template if:true={isLoading}>
             <div class="loading-area">
                 <lightning-spinner
@@ -67,38 +84,55 @@
             </div>
         </template>
 
+        <!-- Report Cards -->
         <template if:false={isLoading}>
             <template if:true={hasReports}>
                 <div class="report-grid">
-                    <template for:each={filteredReports} for:item="report">
+                    <template
+                        for:each={filteredReports}
+                        for:item="report">
+
                         <article class="report-card" key={report.Id}>
                             <div class="report-card-header">
                                 <div>
-                                    <p class="report-number">{report.Name}</p>
+                                    <p class="report-number">
+                                        {report.Name}
+                                    </p>
                                     <h2>{report.destinationLabel}</h2>
                                 </div>
-                                <span class={report.statusClass}>{report.Status__c}</span>
+
+                                <span class={report.statusClass}>
+                                    {report.Status__c}
+                                </span>
                             </div>
 
                             <div class="report-meta">
                                 <div>
                                     <span>Report date</span>
-                                    <strong>{report.formattedReportDate}</strong>
+                                    <strong>
+                                        {report.formattedReportDate}
+                                    </strong>
                                 </div>
+
                                 <div>
                                     <span>Expense total</span>
                                     <strong>{report.formattedTotal}</strong>
                                 </div>
                             </div>
 
-                            <template if:true={report.Rejection_Reason__c}>
+                            <template
+                                if:true={report.Rejection_Reason__c}>
                                 <div class="rejection-note">
-                                    <strong>Reason:</strong> {report.Rejection_Reason__c}
+                                    <strong>Reason:</strong>
+                                    {report.Rejection_Reason__c}
                                 </div>
                             </template>
 
                             <div class="report-card-footer">
-                                <span class="item-hint">View related expense items</span>
+                                <span class="item-hint">
+                                    View related expense items
+                                </span>
+
                                 <lightning-button
                                     label="View Details"
                                     variant="brand"
@@ -118,12 +152,17 @@
                         size="large"
                         alternative-text="Expense reports">
                     </lightning-icon>
+
                     <h2>No expense reports found</h2>
-                    <p>Reports assigned to your Salesforce user will appear here.</p>
+                    <p>
+                        Reports assigned to your Salesforce user
+                        will appear here.
+                    </p>
                 </div>
             </template>
         </template>
 
+        <!-- Selected Report Details -->
         <template if:true={showDetails}>
             <section class="details-panel">
                 <div class="details-header">
@@ -132,21 +171,22 @@
                         <h2>{selectedReport.Name}</h2>
                         <p>{selectedReport.destinationLabel}</p>
                     </div>
+
                     <lightning-button
                         label="Close Details"
                         onclick={handleCloseDetails}>
                     </lightning-button>
                 </div>
 
+                <template if:true={itemsError}>
+                    <div class="error-banner">{itemsError}</div>
+                </template>
+
                 <template if:true={itemsLoading}>
                     <lightning-spinner
                         alternative-text="Loading expense items"
                         size="medium">
                     </lightning-spinner>
-                </template>
-
-                <template if:true={itemsError}>
-                    <div class="error-banner">{itemsError}</div>
                 </template>
 
                 <template if:false={itemsLoading}>
@@ -164,27 +204,45 @@
                                         <th>Status</th>
                                     </tr>
                                 </thead>
+
                                 <tbody>
-                                    <template for:each={expenseItems} for:item="item">
+                                    <template
+                                        for:each={expenseItems}
+                                        for:item="item">
+
                                         <tr key={item.Id}>
                                             <td>{item.formattedDate}</td>
                                             <td>{item.Category__c}</td>
+
                                             <td>
-                                                <div>{item.Description__c}</div>
-                                                <template if:true={item.Rejection_Reason__c}>
-                                                    <small>{item.Rejection_Reason__c}</small>
+                                                <div>
+                                                    {item.Description__c}
+                                                </div>
+
+                                                <template
+                                                    if:true={item.Rejection_Reason__c}>
+                                                    <small>
+                                                        {item.Rejection_Reason__c}
+                                                    </small>
                                                 </template>
-                                                <template if:true={item.Policy_Check_Notes__c}>
-                                                    <small>{item.Policy_Check_Notes__c}</small>
+
+                                                <template
+                                                    if:true={item.Policy_Check_Notes__c}>
+                                                    <small>
+                                                        {item.Policy_Check_Notes__c}
+                                                    </small>
                                                 </template>
                                             </td>
+
                                             <td>{item.Payment_Method__c}</td>
                                             <td>{item.formattedAmount}</td>
+
                                             <td>
                                                 <span class={item.policyClass}>
                                                     {item.Policy_Status__c}
                                                 </span>
                                             </td>
+
                                             <td>{item.Status__c}</td>
                                         </tr>
                                     </template>
@@ -197,11 +255,146 @@
                         <template if:false={itemsError}>
                             <div class="empty-state compact">
                                 <h3>No expense items in this report</h3>
-                                <p>Related expense items will appear here when available.</p>
+                                <p>
+                                    Create an expense using the New Expense
+                                    button to add it to a Draft report.
+                                </p>
                             </div>
                         </template>
                     </template>
                 </template>
+            </section>
+        </template>
+
+        <!-- New Expense Modal -->
+        <template if:true={showExpenseForm}>
+            <section class="expense-modal-backdrop">
+                <div
+                    class="expense-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="expense-modal-title">
+
+                    <div class="details-header modal-header">
+                        <div>
+                            <p class="eyebrow">
+                                TRAVELEASY · EXPENSES
+                            </p>
+                            <h2 id="expense-modal-title">
+                                Create New Expense
+                            </h2>
+                            <p>
+                                Enter the details of your business expense.
+                            </p>
+                        </div>
+
+                        <lightning-button-icon
+                            icon-name="utility:close"
+                            alternative-text="Close form"
+                            onclick={handleCloseExpenseForm}
+                            disabled={isSaving}>
+                        </lightning-button-icon>
+                    </div>
+
+                    <template if:true={formError}>
+                        <div class="error-banner">{formError}</div>
+                    </template>
+
+                    <template if:true={noDraftReports}>
+                        <div class="error-banner">
+                            You don't have any Draft expense reports.
+                            Create or obtain a Draft report before adding
+                            an expense.
+                        </div>
+                    </template>
+
+                    <div class="expense-form-grid">
+                        <lightning-combobox
+                            name="reportId"
+                            label="Expense Report"
+                            value={newExpense.reportId}
+                            options={reportOptions}
+                            onchange={handleExpenseFieldChange}
+                            required
+                            disabled={isSaving}>
+                        </lightning-combobox>
+
+                        <lightning-input
+                            name="expenseDate"
+                            label="Expense Date"
+                            type="date"
+                            value={newExpense.expenseDate}
+                            max={today}
+                            onchange={handleExpenseFieldChange}
+                            required
+                            disabled={isSaving}>
+                        </lightning-input>
+
+                        <lightning-combobox
+                            name="category"
+                            label="Category"
+                            value={newExpense.category}
+                            options={categoryOptions}
+                            onchange={handleExpenseFieldChange}
+                            required
+                            disabled={isSaving}>
+                        </lightning-combobox>
+
+                        <lightning-input
+                            name="amount"
+                            label="Amount (₹)"
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            value={newExpense.amount}
+                            onchange={handleExpenseFieldChange}
+                            required
+                            disabled={isSaving}>
+                        </lightning-input>
+
+                        <lightning-combobox
+                            name="paymentMethod"
+                            label="Payment Method"
+                            value={newExpense.paymentMethod}
+                            options={paymentOptions}
+                            onchange={handleExpenseFieldChange}
+                            disabled={isSaving}>
+                        </lightning-combobox>
+
+                        <lightning-textarea
+                            name="description"
+                            label="Description"
+                            value={newExpense.description}
+                            onchange={handleExpenseFieldChange}
+                            disabled={isSaving}>
+                        </lightning-textarea>
+                    </div>
+
+                    <div class="expense-form-actions">
+                        <lightning-button
+                            label="Cancel"
+                            onclick={handleCloseExpenseForm}
+                            disabled={isSaving}>
+                        </lightning-button>
+
+                        <lightning-button
+                            label="Save Expense"
+                            variant="brand"
+                            icon-name="utility:save"
+                            onclick={handleSaveExpense}
+                            disabled={saveDisabled}>
+                        </lightning-button>
+                    </div>
+
+                    <template if:true={isSaving}>
+                        <div class="saving-overlay">
+                            <lightning-spinner
+                                alternative-text="Saving expense"
+                                size="medium">
+                            </lightning-spinner>
+                        </div>
+                    </template>
+                </div>
             </section>
         </template>
     </div>

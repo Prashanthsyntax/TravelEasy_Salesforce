@@ -1,11 +1,14 @@
 
 import { LightningElement, wire } from 'lwc';
 import { refreshApex } from '@salesforce/apex';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 import getMyExpenseReports
     from '@salesforce/apex/TravelEasyExpenseReportController.getMyExpenseReports';
 import getExpenseItems
     from '@salesforce/apex/TravelEasyExpenseReportController.getExpenseItems';
+import createExpenseItem
+    from '@salesforce/apex/TravelEasyExpenseReportController.createExpenseItem';
 
 const STATUS_OPTIONS = [
     { label: 'All Statuses', value: 'All' },
@@ -15,6 +18,25 @@ const STATUS_OPTIONS = [
     { label: 'Approved', value: 'Approved' },
     { label: 'Rejected', value: 'Rejected' },
     { label: 'Paid', value: 'Paid' }
+];
+
+const CATEGORY_OPTIONS = [
+    { label: 'Flight', value: 'Flight' },
+    { label: 'Train', value: 'Train' },
+    { label: 'Hotel', value: 'Hotel' },
+    { label: 'Food', value: 'Food' },
+    { label: 'Local Transport', value: 'Local Transport' },
+    { label: 'Cab', value: 'Cab' },
+    { label: 'Parking', value: 'Parking' },
+    { label: 'Other', value: 'Other' }
+];
+
+const PAYMENT_OPTIONS = [
+    { label: 'Cash', value: 'Cash' },
+    { label: 'Credit Card', value: 'Credit Card' },
+    { label: 'Debit Card', value: 'Debit Card' },
+    { label: 'UPI', value: 'UPI' },
+    { label: 'Other', value: 'Other' }
 ];
 
 const CURRENCY_FORMATTER = new Intl.NumberFormat('en-IN', {
@@ -28,7 +50,7 @@ function formatDate(value) {
         return '—';
     }
 
-    const date = new Date(value);
+    const date = new Date(`${value}T00:00:00`);
 
     return Number.isNaN(date.getTime())
         ? '—'
@@ -78,6 +100,26 @@ function policyClass(status) {
     return 'policy-badge policy-pending';
 }
 
+function getTodayString() {
+    const now = new Date();
+    const localDate = new Date(
+        now.getTime() - now.getTimezoneOffset() * 60000
+    );
+
+    return localDate.toISOString().slice(0, 10);
+}
+
+function emptyExpense(today) {
+    return {
+        reportId: '',
+        expenseDate: today,
+        category: '',
+        amount: '',
+        paymentMethod: '',
+        description: ''
+    };
+}
+
 export default class TravelEasyExpenseReports extends LightningElement {
     reports = [];
     expenseItems = [];
@@ -94,6 +136,11 @@ export default class TravelEasyExpenseReports extends LightningElement {
     itemsError;
 
     wiredReportsResult;
+
+    showExpenseForm = false;
+    isSaving = false;
+    formError;
+    newExpense = emptyExpense(getTodayString());
 
     @wire(getMyExpenseReports)
     wiredReports(result) {
@@ -115,7 +162,6 @@ export default class TravelEasyExpenseReports extends LightningElement {
 
             this.errorMessage = undefined;
             this.isLoading = false;
-
             this.updateSelectedReport();
         } else if (error) {
             this.reports = [];
@@ -124,8 +170,37 @@ export default class TravelEasyExpenseReports extends LightningElement {
         }
     }
 
+    get today() {
+        return getTodayString();
+    }
+
     get statusOptions() {
         return STATUS_OPTIONS;
+    }
+
+    get categoryOptions() {
+        return CATEGORY_OPTIONS;
+    }
+
+    get paymentOptions() {
+        return PAYMENT_OPTIONS;
+    }
+
+    get reportOptions() {
+        return this.reports
+            .filter((report) => report.Status__c === 'Draft')
+            .map((report) => ({
+                label: `${report.Name} — ${report.destinationLabel}`,
+                value: report.Id
+            }));
+    }
+
+    get noDraftReports() {
+        return this.reportOptions.length === 0;
+    }
+
+    get saveDisabled() {
+        return this.isSaving || this.noDraftReports;
     }
 
     get filteredReports() {
@@ -182,6 +257,10 @@ export default class TravelEasyExpenseReports extends LightningElement {
         return this.expenseItems.length > 0;
     }
 
+    get selectedReportIsDraft() {
+        return this.selectedReport?.Status__c === 'Draft';
+    }
+
     handleSearch(event) {
         this.searchTerm = event.target.value;
     }
@@ -206,18 +285,21 @@ export default class TravelEasyExpenseReports extends LightningElement {
     }
 
     async handleViewDetails(event) {
-        this.selectedReportId = event.currentTarget.dataset.id;
+        const reportId = event.currentTarget.dataset.id;
+        await this.loadReportDetails(reportId);
+    }
+
+    async loadReportDetails(reportId) {
+        this.selectedReportId = reportId;
         this.updateSelectedReport();
         this.expenseItems = [];
         this.itemsError = undefined;
         this.itemsLoading = true;
 
         try {
-            const data = await getExpenseItems({
-                reportId: this.selectedReportId
-            });
+            const data = await getExpenseItems({ reportId });
 
-            this.expenseItems = data.map((item) => ({
+            this.expenseItems = (data || []).map((item) => ({
                 ...item,
                 formattedDate: formatDate(item.Expense_Date__c),
                 formattedAmount: formatCurrency(item.Amount__c),
@@ -242,6 +324,113 @@ export default class TravelEasyExpenseReports extends LightningElement {
             this.reports.find(
                 (report) => report.Id === this.selectedReportId
             ) || undefined;
+    }
+
+    handleOpenExpenseForm() {
+        this.formError = undefined;
+
+        this.newExpense = {
+            ...emptyExpense(this.today),
+            reportId:
+                this.selectedReport?.Status__c === 'Draft'
+                    ? this.selectedReportId
+                    : ''
+        };
+
+        this.showExpenseForm = true;
+    }
+
+    handleCloseExpenseForm() {
+        if (this.isSaving) {
+            return;
+        }
+
+        this.showExpenseForm = false;
+        this.formError = undefined;
+    }
+
+    handleExpenseFieldChange(event) {
+        const field = event.target.name;
+        const value = event.detail?.value ?? event.target.value;
+
+        this.newExpense = {
+            ...this.newExpense,
+            [field]: value
+        };
+    }
+
+    async handleSaveExpense() {
+        this.formError = undefined;
+
+        const form = this.template.querySelector('.expense-modal');
+
+        if (!form) {
+            this.formError = 'Unable to open the expense form. Please try again.';
+            return;
+        }
+
+        const inputs = [
+            ...form.querySelectorAll(
+                'lightning-input, lightning-combobox'
+            )
+        ];
+
+        const valid = inputs.reduce(
+            (allValid, input) => input.reportValidity() && allValid,
+            true
+        );
+
+        if (!valid) {
+            return;
+        }
+
+        const amount = Number(this.newExpense.amount);
+
+        if (!Number.isFinite(amount) || amount <= 0) {
+            this.formError = 'Enter an amount greater than zero.';
+            return;
+        }
+
+        if (!this.newExpense.reportId) {
+            this.formError = 'Please select a Draft expense report.';
+            return;
+        }
+
+        const savedReportId = this.newExpense.reportId;
+        this.isSaving = true;
+
+        try {
+            await createExpenseItem({
+                reportId: savedReportId,
+                expenseDate: this.newExpense.expenseDate,
+                category: this.newExpense.category,
+                amount,
+                description: this.newExpense.description,
+                paymentMethod: this.newExpense.paymentMethod
+            });
+
+            this.showExpenseForm = false;
+
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'Expense created',
+                    message: 'Your expense was saved successfully.',
+                    variant: 'success'
+                })
+            );
+
+            if (this.wiredReportsResult) {
+                await refreshApex(this.wiredReportsResult);
+            }
+
+            // Keep the selected report open and reload its expense items.
+            await this.loadReportDetails(savedReportId);
+        } catch (error) {
+            this.formError = this.getErrorMessage(error);
+            this.showExpenseForm = true;
+        } finally {
+            this.isSaving = false;
+        }
     }
 
     getErrorMessage(error) {
